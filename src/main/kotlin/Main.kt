@@ -1,95 +1,87 @@
 fun main(args: Array<String>) {
-    val sort = args.contains("-sortIntegers")
-    val command =
-        if (sort) "long" else if (args.isNotEmpty() && args.size == 2 && args[0] == "-dataType") args[1] else "word"
+    val sortCount = args.contains("-sortingType") && args.contains("byCount")
     val lines = generateSequence(::readLine).toList()
 
-    when (command) {
-        "long" -> numbers(lines, sort)
-        "line" -> lines(lines)
-        "word" -> words(lines)
+    when {
+        args.contains("long") -> numbers(lines, sortCount)
+        args.contains("line") -> lines(lines, sortCount)
+        else -> words(lines, sortCount)
     }
 }
 
-fun numbers(lines: List<String>, sort: Boolean) {
+fun numbers(lines: List<String>, sortCount: Boolean) {
     val numbers = mutableListOf<Long>()
-    val max = { numbers.maxOrNull() ?: throw NumberFormatException() }
-    val count = { numbers.count { it == max() } }
 
     for (line in lines) filterLine(line).map { it.toLong() }.forEach { numbers.add(it) }
     println("Total numbers: ${numbers.size}.")
-    if (!sort) println("The greatest number: ${max()} (${count()} time(s), ${count() * 100 / numbers.size}%).") else {
-        val numSort = numbers.toTypedArray()
-        mergeSort(numSort)
-        print("Sorted data: ")
-        for (i in numSort.indices) print("${numSort[i]}" + if (i != numSort.lastIndex) " " else "")
-        println()
+    if (sortCount) {
+        val percent = { count: Int -> count * 100 / numbers.size }
+        val mapCount = mutableMapOf<Int, MutableList<Long>>()
+        for (number in numbers) {
+            val count = numbers.count { it == number }
+            if (mapCount.containsKey(count) && !mapCount[count]?.contains(number)!!) mapCount[count]?.add(number) else {
+                mapCount[count] = mutableListOf(number)
+            }
+        }
+        val counts = mapCount.keys.toList().sorted()
+        for (count in counts) {
+            val numbs = mapCount[count]?.sorted() ?: break
+            for (numb in numbs) println("$numb: $count time(s), ${percent(count)}%")
+        }
+    } else {
+        numbers.sort()
+        printSort()
+        printList(numbers)
     }
 }
 
-fun lines(lines: List<String>) {
-    val max = { lines.maxByOrNull { it.length } ?: throw Exception() }
-    val count = { lines.count { it == max() } }
-
+fun lines(lines: List<String>, sortCount: Boolean) {
     println("Total lines: ${lines.size}.")
-    println("The longest line:")
-    println(max())
-    println("(${count()} time(s), ${count() * 100 / lines.size}%).")
+    if (sortCount) {
+        printStringsCount(lines)
+    } else {
+        val hold = lines.sorted()
+        printSort("\n")
+        printList(hold, true)
+    }
 }
 
-fun words(lines: List<String>) {
-    var words = mutableListOf<String>()
-    val max = { words.maxByOrNull { it.length } ?: throw Exception() }
-    val count = { words.count { it == max() } }
+fun words(lines: List<String>, sortCount: Boolean) {
+    val words = mutableListOf<String>()
 
     for (line in lines) filterLine(line).map { it }.forEach { words.add(it) }
-    words = words.sorted().toMutableList()
     println("Total words: ${words.size}.")
-    println("The longest word: ${max()} (${count()} time(s), ${count() * 100 / words.size}%).")
+    if (sortCount) {
+        printStringsCount(words)
+    } else {
+        words.sort()
+        printSort()
+        printList(words)
+    }
 }
 
 fun filterLine(line: String) = line.replace("\\s+".toRegex(), " ").split(" ")
 
-// modified from https://www.geeksforgeeks.org/merge-sort/
-fun mergeSort(numbers: Array<Long>, left: Int = 0, right: Int = numbers.lastIndex) {
-    if (left < right) {
-        val middle = (left + right) / 2
+fun printSort(add: String = "") = print("Sorted data: $add")
 
-        mergeSort(numbers, left, middle)
-        mergeSort(numbers, middle + 1, right)
-        merge(numbers, left, middle, right)
-    }
+fun printList(list: List<Any>, line: Boolean = false) {
+    for (i in list.indices) print("${list[i]}" + if (i != list.lastIndex) if (line) "\n" else " " else "")
+    println()
 }
 
-fun merge(numbers: Array<Long>, left: Int, middle: Int, right: Int) {
-    val sub1 = middle - left + 1
-    val sub2 = right - middle
-    val leftTemp = Array(sub1) { 0L }
-    val rightTemp = Array(sub2) { 0L }
-    var i = 0
-    var j = 0
-    var k = left
+fun printStringsCount(strings: List<String>) {
+    val percent = { count: Int -> count * 100 / strings.size }
+    val mapCount = mutableMapOf<Int, MutableList<String>>()
 
-    for (i1 in 0 until sub1) leftTemp[i1] = numbers[left + i1]
-    for (j1 in 0 until sub2) rightTemp[j1] = numbers[middle + 1 + j1]
-    while (i < sub1 && j < sub2) {
-        if (leftTemp[i] <= rightTemp[j]) {
-            numbers[k] = leftTemp[i]
-            i++
-        } else {
-            numbers[k] = rightTemp[j]
-            j++
+    for (string in strings) {
+        val count = strings.count { it == string }
+        if (mapCount.containsKey(count) && !mapCount[count]?.contains(string)!!) mapCount[count]?.add(string) else {
+            mapCount[count] = mutableListOf(string)
         }
-        k++
     }
-    while (i < sub1) {
-        numbers[k] = leftTemp[i]
-        i++
-        k++
-    }
-    while (j < sub2) {
-        numbers[k] = rightTemp[j]
-        j++
-        k++
+    val counts = mapCount.keys.toList().sorted()
+    for (count in counts) {
+        val strings2 = mapCount[count]?.sorted() ?: break
+        for (string in strings2) println("$string: $count time(s), ${percent(count)}%")
     }
 }
