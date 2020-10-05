@@ -1,18 +1,45 @@
 fun main(args: Array<String>) {
     val sortCount = args.contains("-sortingType") && args.contains("byCount")
-    val lines = generateSequence(::readLine).toList()
+    if (commandsOkay(args)) {
+        val lines = generateSequence(::readLine).toList()
 
-    when {
-        args.contains("long") -> numbers(lines, sortCount)
-        args.contains("line") -> lines(lines, sortCount)
-        else -> words(lines, sortCount)
+        when {
+            args.contains("long") -> numbers(lines, sortCount)
+            args.contains("line") -> lines(lines, sortCount)
+            else -> words(lines, sortCount)
+        }
     }
+}
+
+fun commandsOkay(args: Array<String>): Boolean {
+    val sortType = listOf("byCount", "natural")
+    val dataType = listOf("long", "line", "word")
+
+    for (i in args.indices) {
+        val last = i == args.lastIndex
+
+        when (args[i]) {
+            "-sortingType" -> if (last || !sortType.contains(args[i + 1])) {
+                println("No sorting type defined!")
+                return false
+            }
+            "-dataType" -> if (last || !dataType.contains(args[i + 1])) {
+                println("No sorting type defined!")
+                return false
+            }
+            else -> if (!(sortType + dataType).contains(args[i]))
+                println("\"${args[i]}\" is not a valid parameter. It will be skipped.")
+        }
+    }
+    return true
 }
 
 fun numbers(lines: List<String>, sortCount: Boolean) {
     val numbers = mutableListOf<Long>()
+    val error = { it: String -> println("\"$it\" is not a long. It will be skipped."); null }
 
-    for (line in lines) filterLine(line).map { it.toLong() }.forEach { numbers.add(it) }
+    for (line in lines) filterLine(line).map { it.toLongOrNull() ?: error(it) }
+        .forEach { if (it != null) numbers.add(it) }
     println("Total numbers: ${numbers.size}.")
     if (sortCount) {
         val percent = { count: Int -> count * 100 / numbers.size }
