@@ -49,7 +49,7 @@ fun commandsOkay(args: Array<String>): Boolean {
                 )
                 return false
             }
-            else -> if (!(sortType + dataType).contains(args[i]))
+            else -> if (!(sortType + dataType).contains(args[i]) && args[i] != INPUT && args[i] != OUTPUT)
                 println("\"${args[i]}\" is not a valid parameter. It will be skipped.")
         }
     }
